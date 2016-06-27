@@ -47,15 +47,7 @@ func (driver quobyteDriver) Remove(request volume.Request) volume.Response {
 	driver.m.Lock()
 	defer driver.m.Unlock()
 
-	driver.unmountVolume(request.Name)
-
-	uuid, err := driver.client.ResolveVolumeNameToUUID(request.Name)
-	if err != nil {
-		return volume.Response{Err: err.Error()}
-	}
-
-	// TODO check if allways [0] or if there are other cases?
-	if err = driver.client.DeleteVolume(uuid[0]); err != nil {
+	if err := driver.client.DeleteVolumeByName(request.Name); err != nil {
 		return volume.Response{Err: err.Error()}
 	}
 
