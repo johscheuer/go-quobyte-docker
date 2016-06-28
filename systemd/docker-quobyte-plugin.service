@@ -7,7 +7,7 @@ Requires=docker-quobyte-plugin.socket docker.service
 
 [Service]
 EnvironmentFile=/etc/quobyte/docker-quobyte.env
-ExecStart=/usr/libexec/docker/quobyte-docker-plugin
+ExecStart=/usr/libexec/docker/docker-quobyte-plugin
 
 [Install]
 WantedBy=multi-user.target

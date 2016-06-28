@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
-const quobyteID = "quobyte"
+const quobyteID string = "quobyte"
 
 // Mandatory configuration
 var qmgmtUser string
@@ -19,12 +18,9 @@ var quobyteRegistry string
 // Optional configuration
 var mountQuobytePath string
 var mountQuobyteOptions string
-var qmgmtPath string
 var defaultVolumeConfiguration string
 
 // Constants
-const pluginDirectory string = "/run/docker/plugins/"
-const pluginSocket string = "/run/docker/plugins/quobyte.sock"
 const mountDirectory string = "/run/docker/quobyte/mnt"
 
 func main() {
@@ -35,15 +31,12 @@ func main() {
 		log.Println(err.Error())
 	}
 
-	if err := os.MkdirAll(pluginDirectory, 055); err != nil {
-		log.Println(err.Error())
-	}
-
-	if !isMounted(mountDirectory) {
-		log.Printf("Mounting Quobyte namespace in %s", mountDirectory)
+	if !isMounted(mountQuobytePath) {
+		log.Printf("Mounting Quobyte namespace in %s", mountQuobytePath)
 		mountAll()
 	}
 
 	qDriver := newQuobyteDriver(quobyteAPIURL, qmgmtUser, qmgmtPassword)
-	fmt.Println(volume.NewHandler(qDriver).ServeUnix("root", quobyteID))
+	handler := volume.NewHandler(qDriver)
+	log.Println(handler.ServeUnix("root", quobyteID))
 }

@@ -1,6 +1,6 @@
-# Quobyte volume plug-in for Docker (Alpha state)
+# Quobyte volume plug-in for Docker
 
-Initial idea from the [quobyte docker plugin](https://github.com/quobyte/docker-volume)
+Initial idea from the [quobyte docker plugin](https://github.com/quobyte/docker-volume). Tested with `CentOS 7.2` and `Docker 1.10.3`. This rewrite allows you to use [Quobyte](www.quobyte.com) with Docker without installing the Quobyte client on the host system (e.q. Rancher/CoreOS).
 
 ## Build
 
@@ -14,15 +14,15 @@ $ go get -u github.com/johscheuer/go-quobyte-docker
 ### Linux
 
 ```
-$ go build -o quobyte-docker-plugin .
-$ mv quobyte-docker-plugin /usr/libexec/docker/quobyte-docker-plugin
+$ go build -o quobyte-docker-plugin -o docker-quobyte-plugin .
+$ cp quobyte-docker-plugin /usr/libexec/docker/docker-quobyte-plugin
 ```
 
 ### OSX/MacOS
 
 ```
-$ GOOS=linux GOARCH=amd64 go build -o quobyte-docker-plugin .
-$ mv quobyte-docker-plugin /usr/libexec/docker/quobyte-docker-plugin
+$ GOOS=linux GOARCH=amd64 go build -o docker-quobyte-plugin
+$ cp quobyte-docker-plugin /usr/libexec/docker/docker-quobyte-plugin
 ```
 
 ## Setup
@@ -62,9 +62,11 @@ $ docker run --volume-driver=quobyte -v <quobyte volumename>:path
 
 ```
 $ cp systemd/docker-quobyte.env.sample /etc/quobyte/docker-quobyte.env
-$ cp quobyte-docker-plugin /usr/libexec/docker/
+$ cp docker-quobyte-plugin /usr/libexec/docker/
 $ cp systemd/* /lib/systemd/system
 
+$ systemctl daemon-reload
+$ systemctl start docker-quobyte-plugin
 $ systemctl enable docker-quobyte-plugin
 $ systemctl status docker-quobyte-plugin
 ```
