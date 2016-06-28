@@ -7,8 +7,8 @@ Initial idea from the [quobyte docker plugin](https://github.com/quobyte/docker-
 Get the code
 
 ```
-$ go get github.com/quobyte/api
-$ go get github.com/johscheuer/go-quobyte-docker
+$ go get -u github.com/quobyte/api
+$ go get -u github.com/johscheuer/go-quobyte-docker
 ```
 
 ### Linux
@@ -21,7 +21,7 @@ $ mv quobyte-docker-plugin /usr/libexec/docker/quobyte-docker-plugin
 ### OSX/MacOS
 
 ```
-$ GOOS=linux GOARCH=am64 go build -o quobyte-docker-plugin .
+$ GOOS=linux GOARCH=amd64 go build -o quobyte-docker-plugin .
 $ mv quobyte-docker-plugin /usr/libexec/docker/quobyte-docker-plugin
 ```
 
@@ -62,7 +62,7 @@ $ docker run --volume-driver=quobyte -v <quobyte volumename>:path
 
 ```
 $ cp systemd/docker-quobyte.env.sample /etc/quobyte/docker-quobyte.env
-$ cp quobyte-docker-volume.py /usr/libexec/docker/
+$ cp quobyte-docker-plugin /usr/libexec/docker/
 $ cp systemd/* /lib/systemd/system
 
 $ systemctl enable docker-quobyte-plugin
