@@ -107,7 +107,9 @@ func (driver quobyteDriver) List(request volume.Request) volume.Response {
 	return volume.Response{Volumes: vols}
 }
 
-//TODO /VolumeDriver.Capabilities
+func (driver quobyteDriver) Capabilities(request volume.Request) volume.Response {
+	return volume.Response{Capabilities: volume.Capability{Scope: "local"}}
+}
 
 func (driver *quobyteDriver) mountpoint(name string) string {
 	return filepath.Join(mountQuobytePath, name)
