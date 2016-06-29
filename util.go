@@ -12,15 +12,11 @@ import (
 func readOptionalConfig() {
 	mountQuobytePath = os.Getenv("MOUNT_QUOBYTE_PATH")
 	if len(mountQuobyteOptions) == 0 {
-		mountQuobytePath = mountDirectory
+		mountQuobytePath = "/run/docker/quobyte/mnt"
 	}
 	mountQuobyteOptions = os.Getenv("MOUNT_QUOBYTE_OPTIONS")
 	if len(mountQuobyteOptions) == 0 {
 		mountQuobyteOptions = "-o user_xattr"
-	}
-	defaultVolumeConfiguration = os.Getenv("DEFAULT_VOLUME_CONFIGURATION")
-	if len(defaultVolumeConfiguration) == 0 {
-		defaultVolumeConfiguration = "BASE"
 	}
 }
 
@@ -61,7 +57,7 @@ func isMounted(mountPath string) bool {
 }
 
 func mountAll() {
-	cmdStr := fmt.Sprintf("mount %s -t quobyte %s %s", mountQuobyteOptions, fmt.Sprintf("%s/", quobyteRegistry), mountDirectory)
+	cmdStr := fmt.Sprintf("mount %s -t quobyte %s %s", mountQuobyteOptions, fmt.Sprintf("%s/", quobyteRegistry), mountQuobytePath)
 	if out, err := exec.Command("/bin/sh", "-c", cmdStr).CombinedOutput(); err != nil {
 		log.Fatalln(string(out))
 	}

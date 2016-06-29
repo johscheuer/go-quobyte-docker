@@ -18,16 +18,12 @@ var quobyteRegistry string
 // Optional configuration
 var mountQuobytePath string
 var mountQuobyteOptions string
-var defaultVolumeConfiguration string
-
-// Constants
-const mountDirectory string = "/run/docker/quobyte/mnt"
 
 func main() {
 	readMandatoryConfig()
 	readOptionalConfig()
 
-	if err := os.MkdirAll(mountDirectory, 0555); err != nil {
+	if err := os.MkdirAll(mountQuobytePath, 0555); err != nil {
 		log.Println(err.Error())
 	}
 

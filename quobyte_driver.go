@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/docker/go-plugins-helpers/volume"
 	quobyte_api "github.com/quobyte/api"
@@ -13,11 +14,13 @@ import (
 
 type quobyteDriver struct {
 	client *quobyte_api.QuobyteClient
+	m      *sync.Mutex
 }
 
 func newQuobyteDriver(apiURL string, username string, password string) quobyteDriver {
 	driver := quobyteDriver{
 		client: quobyte_api.NewQuobyteClient(apiURL, username, password),
+		m:      &sync.Mutex{},
 	}
 
 	return driver
@@ -25,9 +28,20 @@ func newQuobyteDriver(apiURL string, username string, password string) quobyteDr
 
 func (driver quobyteDriver) Create(request volume.Request) volume.Response {
 	log.Printf("Creating volume %s\n", request.Name)
-	//TODO how to get user and group -> request.Opts[user] + request.Opts[group] if null set root?
+	driver.m.Lock()
+	defer driver.m.Unlock()
 
-	if _, err := driver.client.CreateVolume(request.Name, "root", "root"); err != nil {
+	user, group := "root", "root"
+
+	if usr, ok := request.Options["user"]; ok {
+		user = usr
+	}
+
+	if grp, ok := request.Options["group"]; ok {
+		group = grp
+	}
+
+	if _, err := driver.client.CreateVolume(request.Name, user, group); err != nil {
 		return volume.Response{Err: err.Error()}
 	}
 
@@ -36,6 +50,8 @@ func (driver quobyteDriver) Create(request volume.Request) volume.Response {
 
 func (driver quobyteDriver) Remove(request volume.Request) volume.Response {
 	log.Printf("Removing volume %s\n", request.Name)
+	driver.m.Lock()
+	defer driver.m.Unlock()
 
 	if err := driver.client.DeleteVolumeByName(request.Name); err != nil {
 		return volume.Response{Err: err.Error()}
@@ -45,7 +61,9 @@ func (driver quobyteDriver) Remove(request volume.Request) volume.Response {
 }
 
 func (driver quobyteDriver) Mount(request volume.Request) volume.Response {
-	mPoint := driver.mountpoint(request.Name)
+	driver.m.Lock()
+	defer driver.m.Unlock()
+	mPoint := filepath.Join(mountQuobytePath, request.Name)
 	log.Printf("Mounting volume %s on %s\n", request.Name, mPoint)
 	if fi, err := os.Lstat(mPoint); err != nil || !fi.IsDir() {
 		return volume.Response{Err: fmt.Sprintf("%v not mounted", mPoint)}
@@ -55,7 +73,7 @@ func (driver quobyteDriver) Mount(request volume.Request) volume.Response {
 }
 
 func (driver quobyteDriver) Path(request volume.Request) volume.Response {
-	return volume.Response{Mountpoint: driver.mountpoint(request.Name)}
+	return volume.Response{Mountpoint: filepath.Join(mountQuobytePath, request.Name)}
 }
 
 func (driver quobyteDriver) Unmount(request volume.Request) volume.Response {
@@ -63,7 +81,10 @@ func (driver quobyteDriver) Unmount(request volume.Request) volume.Response {
 }
 
 func (driver quobyteDriver) Get(request volume.Request) volume.Response {
-	mPoint := driver.mountpoint(request.Name)
+	driver.m.Lock()
+	defer driver.m.Unlock()
+
+	mPoint := filepath.Join(mountQuobytePath, request.Name)
 
 	if fi, err := os.Lstat(mPoint); err != nil || !fi.IsDir() {
 		return volume.Response{Err: fmt.Sprintf("%v not mounted", mPoint)}
@@ -73,6 +94,9 @@ func (driver quobyteDriver) Get(request volume.Request) volume.Response {
 }
 
 func (driver quobyteDriver) List(request volume.Request) volume.Response {
+	driver.m.Lock()
+	defer driver.m.Unlock()
+
 	var vols []*volume.Volume
 	files, err := ioutil.ReadDir(mountQuobytePath)
 	if err != nil {
@@ -81,7 +105,7 @@ func (driver quobyteDriver) List(request volume.Request) volume.Response {
 
 	for _, entry := range files {
 		if entry.IsDir() {
-			vols = append(vols, &volume.Volume{Name: entry.Name(), Mountpoint: driver.mountpoint(entry.Name())})
+			vols = append(vols, &volume.Volume{Name: entry.Name(), Mountpoint: filepath.Join(mountQuobytePath, entry.Name())})
 		}
 	}
 
@@ -90,8 +114,4 @@ func (driver quobyteDriver) List(request volume.Request) volume.Response {
 
 func (driver quobyteDriver) Capabilities(request volume.Request) volume.Response {
 	return volume.Response{Capabilities: volume.Capability{Scope: "local"}}
-}
-
-func (driver *quobyteDriver) mountpoint(name string) string {
-	return filepath.Join(mountQuobytePath, name)
 }
