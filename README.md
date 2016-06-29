@@ -14,7 +14,7 @@ $ go get -u github.com/johscheuer/go-quobyte-docker
 ### Linux
 
 ```
-$ go build -o quobyte-docker-plugin -o docker-quobyte-plugin .
+$ go build -o docker-quobyte-plugin .
 $ cp quobyte-docker-plugin /usr/libexec/docker/docker-quobyte-plugin
 ```
 
@@ -27,38 +27,25 @@ $ cp quobyte-docker-plugin /usr/libexec/docker/docker-quobyte-plugin
 
 ## Setup
 
-- create a user in Quobyte for the plug-in:
+### Create a user in Quobyte for the plug-in:
 
-  ```
-  qmgmt -u <api-url> user config add docker <email>
-  ```
-
-- set mandatory configuration in environment
-
-  ```
-  export QUOBYTE_API_USER=docker
-  export QUOBYTE_API_PASSWORD=...
-  export QUOBYTE_API_URL=http://<host>:7860/
-  # host[:port][,host:port] or SRV record name
-  export QUOBYTE_REGISTRY=quobyte.corp
-  ```
-
-- Start the plug-in as root (with above environment)
-
-  ```
-  quobyte-docker-volume
-  ```
-
-Examples:
+This step is optional.
 
 ```
-$ docker volume create --driver quobyte --name <volumename> --opt volume_config=MyConfig
-$ docker volume create --driver quobyte --name <volumename>
-$ docker volume rm <volumename>
-$ docker run --volume-driver=quobyte -v <quobyte volumename>:path
+$ qmgmt -u <api-url> user config add docker <email>
 ```
 
-- Install systemd files Set the variables in systemd/docker-quobyte.env.sample
+### Set mandatory configuration in environment
+
+```
+$ export QUOBYTE_API_USER=docker
+$ export QUOBYTE_API_PASSWORD=...
+$ export QUOBYTE_API_URL=http://<host>:7860/
+# host[:port][,host:port] or SRV record name
+$ export QUOBYTE_REGISTRY=quobyte.corp
+```
+
+### Install systemd files Set the variables in systemd/docker-quobyte.env.sample
 
 ```
 $ cp systemd/docker-quobyte.env.sample /etc/quobyte/docker-quobyte.env
@@ -71,6 +58,30 @@ $ systemctl enable docker-quobyte-plugin
 $ systemctl status docker-quobyte-plugin
 ```
 
-## TODO
+## Examples
 
-- [] Use OPTS to get user and group
+### Create a volume
+
+```
+$ docker volume create --driver quobyte --name <volumename>
+# Set user and group of the volume
+$ docker volume create --driver quobyte --name <volumename> --opt user=docker --opt group=docker
+```
+
+### Delete a volume
+
+```
+$ docker volume rm <volumename>
+```
+
+### List all volumes
+
+```
+$ docker volume ls
+```
+
+### Attach volume to container
+
+```
+$ docker run --volume-driver=quobyte -v <volumename>:/vol busybox sh -c 'echo "Hello World" > /vol/hello.txt'
+```
